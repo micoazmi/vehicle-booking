@@ -1,111 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Booking Vehicle</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background: #343a40;
-            color: white;
-            position: fixed;
-            padding: 20px;
-        }
-        .sidebar a {
-            color: white;
-            display: block;
-            padding: 10px;
-            text-decoration: none;
-        }
-        .sidebar a:hover {
-            background: #495057;
-        }
-        .content {
-            margin-left: 260px;
-            padding: 20px;
-        }
-    </style>
-</head>
-<body>
+@extends('layouts.app')
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h3>Vehicle Booking</h3>
-        <a href="{{ route('dashboard') }}">Dashboard</a>
-        <a href="#">Bookings</a>
-        <a href="#">Vehicles</a>
-        <a href="#">Approvals</a>
-        <form method="POST" action="{{ route('logout') }}" class="mt-3">
-            @csrf
-            <button type="submit" class="btn btn-danger w-100">Logout</button>
-        </form>
-    </div>
+@section('title', 'Dashboard - Booking Vehicle')
 
-    <!-- Content -->
-    <div class="content">
-        <h2>Dashboard</h2>
-        <p>Welcome, {{ auth()->user()->name }}!</p>
+@section('content')
+<div class="container mt-4">
+    <h2>Dashboard</h2>
+    <p>Welcome, {{ auth()->user()->name }}!</p>
 
-        <!-- Booking Summary -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h5>Total Bookings</h5>
-                        <h3>120</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h5>Approved</h5>
-                        <h3>85</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <h5>Pending Approvals</h5>
-                        <h3>35</h3>
-                    </div>
+    <!-- Booking Summary -->
+    <div class="row">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>Total Bookings</h5>
+                    <h3>{{ $totalBookings }}</h3>
                 </div>
             </div>
         </div>
-
-        <!-- Recent Bookings -->
-        <div class="mt-4">
-            <h4>Recent Bookings</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Vehicle</th>
-                        <th>User</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Toyota Avanza</td>
-                        <td>John Doe</td>
-                        <td><span class="badge bg-success">Approved</span></td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Honda Civic</td>
-                        <td>Jane Smith</td>
-                        <td><span class="badge bg-danger">Pending</span></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Approved</h5>
+                    <h3>{{ $approvedBookings }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5>Pending Approvals</h5>
+                    <h3>{{ $pendingBookings }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>Rejected</h5>
+                    <h3>{{ $rejectedBookings }}</h3> {{-- Add Rejected Count --}}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>With Driver</h5>
+                    <h3>{{ $bookingsWithDriver }}</h3>
+                </div>
+            </div>
         </div>
     </div>
 
-</body>
-</html>
+    <!-- Recent Bookings -->
+    <div class="mt-4">
+        <h4>Recent Bookings</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Vehicle</th>
+                    <th>Admin</th>                   
+                    <th>Driver</th>
+                    <th>Approver</th> {{-- NEW COLUMN --}}
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($recentBookings as $booking)
+                    <tr>
+                        <td>{{ $booking->id }}</td>
+                        <td>{{ $booking->vehicle->name ?? 'Unknown Vehicle' }}</td>
+                        <td>{{ $booking->user->name ?? 'Unknown User' }}</td>
+                        <td>{{ $booking->driver->name ?? 'No Driver' }}</td>
+                        <td>{{ $booking->approval->approver->name ?? 'Not Assigned' }}</td> {{-- SHOW APPROVER --}}
+                        <td>
+                            @if($booking->status == 'approved')
+                                <span class="badge bg-success">Approved</span>
+                            @elseif($booking->status == 'pending')
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            @elseif($booking->status == 'rejected')
+                                <span class="badge bg-danger">Rejected</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+
+                @if($recentBookings->isEmpty())
+                    <tr>
+                        <td colspan="6" class="text-center">No bookings found</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+</div>
+@endsection
